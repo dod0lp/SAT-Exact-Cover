@@ -10,10 +10,10 @@ Rows Columns
 [Columns]
 """
 
-"""
-Parse file that contains boolean adjacency matrix of a graph
-"""
 def parse_file(filename: str) -> list[bool]:
+    """
+    Parse file that contains boolean adjacency matrix of a graph
+    """
     error_msg_first_line = "Error: The first line should contain exactly two integers."
 
     with open(filename, 'r') as file:
@@ -46,6 +46,9 @@ def parse_file(filename: str) -> list[bool]:
 # col j
 
 def exact_cover_to_sat(matrix) -> list[int]:
+    """
+    Using mappings defined in `README`, map parsed input into `CNF` clauses.
+    """
     rows, columns = len(matrix), len(matrix[0])
     clauses = []
 
@@ -67,18 +70,19 @@ def exact_cover_to_sat(matrix) -> list[int]:
 
     return clauses
 
-"""
-Writes clause list into file line by line, no formatting of dimacs
-"""
 def write_clause_list_to_file(clauses: list[int], filename: str):
+
+    """
+    Writes clause list into file line by line, no formatting of dimacs
+    """
     with open(filename, 'a') as file:
         for sublist in clauses:
             file.write(" ".join(map(str, sublist)) + "\n")
 
-"""
-Writes prefix of DIMACS
-"""
 def dimacs_header(clauses: list[int], filename: str):
+    """
+    Writes prefix of DIMACS
+    """
     # = number of variables (maximum absolute value in the clauses)
     num_variables = max(max(abs(literal) for literal in clause) for clause in clauses)
     
@@ -87,10 +91,10 @@ def dimacs_header(clauses: list[int], filename: str):
     with open(filename, 'w') as file:
         file.write(f"p cnf {num_variables} {num_clauses}\n")
 
-"""
-Output DIMACS format into REWRITTEN file.
-"""
 def output_dimacs_file(clauses: list[int], filename: str):
+    """
+    Output DIMACS format into REWRITTEN file.
+    """
     dimacs_header(clauses, filename)
 
     write_clause_list_to_file(clauses, filename)
@@ -113,10 +117,14 @@ def clauses_into_dimacs(clauses: list[int]):
 RET_UNSAT = 20
 RET_SAT = 10
 
-"""
-Runs Glucose solver process, and gets results
-"""
 def run_glucose(filename_dimacs: str) -> CompletedProcess[str]:
+    """
+    Runs Glucose solver process, and gets results
+
+        Throws:
+            - `FileNotFoundError`
+            - `Exception`
+    """
     try:
         result = subprocess.run(['glucose', '-model', '-verb=' + "1" , filename_dimacs],\
                                 text=True, capture_output=True)
@@ -128,14 +136,14 @@ def run_glucose(filename_dimacs: str) -> CompletedProcess[str]:
     except Exception as e:
         print(f"An error occurred: {e}")
 
-"""
-Prints Glucose solver result, and also writes it into file, if provided filename
-
-ret:
-        0 run successfully
-        -1 error
-"""
 def run_glocse_output_file(filename_dimacs: str, filename_res: None | str = None) -> (Literal[0, -1]):
+    """
+    Prints Glucose solver result, and also writes it into file, if provided filename
+
+        Return values:
+            `0` run successfully
+            `-1` error
+    """
     try:
         result = run_glucose(filename_dimacs)
     except Exception as e:
@@ -151,15 +159,15 @@ def run_glocse_output_file(filename_dimacs: str, filename_res: None | str = None
 
     return 0
 
-"""
-Prints results into console in user-friendly way. 
-
-    ret:
-        0 satisfiable
-        -1 error
-        1 not satisfiable
-"""
 def run_glucose_user(filename_dimacs: str) -> (Literal[0, 1, -1]):
+    """
+    Prints results into console in user-friendly way. 
+
+        Return Codes:
+            `0` If operation is successful.
+            `-1` If there is an error.
+            `1` If operation is not satisfiable.
+    """
     try:
         result = run_glucose(filename_dimacs)
     except Exception as e:
@@ -198,13 +206,33 @@ def run_glucose_user(filename_dimacs: str) -> (Literal[0, 1, -1]):
     return 0
 
 
-if __name__ == "__main__":
-    data_prefix = "../data/"
-    filename_instance = "2"
+def generate_filenames(filename_instance: str, data_prefix="../data/") -> dict[str, str]:
+    """
+    Create filenames based on input instance_name, by default the data is in `../data/instance_name` folder
+        Return values: dict[str]:
+            `"in"` - filename of input file
+            `"res"` - filename of result returned by glucose
+            `"dimacs"` - filename of dimacs encoding encoded by this script
+    """
+    # base filename using the provided instance and prefix
     filename_base = data_prefix + filename_instance + '/' + filename_instance
-    filename_in = filename_base + ".in"
-    filename_res = filename_base + ".res"
-    filename_dimacs = filename_base + ".dimacs"
+    
+    # the filenames for each extension
+    filenames = {
+        "in": filename_base + ".in",
+        "res": filename_base + ".res",
+        "dimacs": filename_base + ".dimacs"
+    }
+    
+    return filenames
+
+
+if __name__ == "__main__":
+    filename_instance = "2"
+    filenames = generate_filenames(filename_instance)
+    filename_in = filenames["in"]
+    filename_res = filenames["res"]
+    filename_dimacs = filenames["dimacs"]
 
 
     parsed_input = parse_file(filename_in)
