@@ -130,8 +130,12 @@ def run_glucose(filename_dimacs: str) -> CompletedProcess[str]:
 
 """
 Prints Glucose solver result, and also writes it into file, if provided filename
+
+ret:
+        0 run successfully
+        -1 error
 """
-def run_glocse_output_file(filename_dimacs: str, filename_res: None | str = None):
+def run_glocse_output_file(filename_dimacs: str, filename_res: None | str = None) -> (Literal[0, -1]):
     try:
         result = run_glucose(filename_dimacs)
     except Exception as e:
@@ -214,5 +218,5 @@ if __name__ == "__main__":
     output_dimacs_file(dimacs_clauses, filename_dimacs)
 
 
-    # run_glocse_output_file(filename_dimacs, filename_res)
+    run_glocse_output_file(filename_dimacs, filename_res)
     run_glucose_user(filename_dimacs)
