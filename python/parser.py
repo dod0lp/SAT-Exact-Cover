@@ -1,3 +1,4 @@
+import subprocess
 
 """
 Rows Columns
@@ -106,16 +107,49 @@ def print_list(message: str, array: list, sep = True):
 def clauses_into_dimacs(clauses: list[int]):
     return [clause + [0] for clause in clauses]
 
+
+RET_UNSAT = 20
+RET_SAT = 10
+
+def run_glucose(filename_dimacs: str):
+    try:
+        result = subprocess.run(['glucose', '-model', '-verb=' + "1" , filename_dimacs], text=True, capture_output=True)
+        
+        code = result.returncode
+        result_message = result.stdout
+
+        # Check if Glucose ran successfully
+        if code == RET_SAT:
+            print("Solvable, Glucose output:")
+            print(result_message)
+        elif code == RET_UNSAT:
+            print("Not solvable")
+            print(result_message)
+    except FileNotFoundError:
+        print("Glucose executable not found. Ensure 'glucose' is in your system's PATH.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
 if __name__ == "__main__":
     data_prefix = "../data/"
-    filename = data_prefix + "1.in"
+    filename_instance = "2"
+    filename_base = data_prefix + filename_instance
+    filename_in = filename_base + ".in"
+    filename_res = filename_base + ".res"
+    filename_dimacs = filename_base + ".dimacs"
+    with open(filename_res, 'w') as file:
+        file.write("Results: \n")
 
-    parsed_input = parse_file(filename)
+
+    parsed_input = parse_file(filename_in)
     clauses = exact_cover_to_sat(parsed_input)
     dimacs_clauses = clauses_into_dimacs(clauses)
 
     print_list("Parsed input:", parsed_input)
     print_list("CNF clauses:", clauses)
-    print_list("DIMACS clauses:", clauses)
+    print_list("DIMACS clauses:", dimacs_clauses)
 
-    output_dimacs_file(clauses, "out")
+    output_dimacs_file(dimacs_clauses, filename_dimacs)
+
+    run_glucose(filename_dimacs)
