@@ -6,17 +6,22 @@ Rows Columns
 ...
 [Columns]
 """
-def parse_file(filename):
+
+"""
+Parse file that contains boolean adjacency matrix of a graph
+"""
+def parse_file(filename: str) -> list[bool]:
+    error_msg_first_line = "Error: The first line should contain exactly two integers."
+
     with open(filename, 'r') as file:
         first_line = file.readline().strip()
         try:
             rows, cols = map(int, first_line.split())
         except ValueError:
-            print("Error: The first line should contain exactly two integers.")
+            print(error_msg_first_line)
             return
         
-        print(f"Rows: {rows}, Columns: {cols}")
-        
+
         matrix = []
         for i in range(rows):
             line = file.readline().strip()
@@ -32,9 +37,7 @@ def parse_file(filename):
                 print(f"Error: Line {i+2} contains non-integer values.")
                 return
         
-        print("Parsed Matrix (as booleans):")
-        for row in matrix:
-            print(row)
+        return matrix
 
 data_prefix = "../data/"
 filename = data_prefix + "1.in"
