@@ -1,4 +1,5 @@
 import subprocess
+from subprocess import CompletedProcess
 
 """
 Rows Columns
@@ -111,24 +112,53 @@ def clauses_into_dimacs(clauses: list[int]):
 RET_UNSAT = 20
 RET_SAT = 10
 
-def run_glucose(filename_dimacs: str):
+"""
+Runs Glucose solver process, and gets results
+"""
+def run_glucose(filename_dimacs: str) -> CompletedProcess[str]:
     try:
-        result = subprocess.run(['glucose', '-model', '-verb=' + "1" , filename_dimacs], text=True, capture_output=True)
+        result = subprocess.run(['glucose', '-model', '-verb=' + "1" , filename_dimacs],\
+                                text=True, capture_output=True)
         
-        code = result.returncode
-        result_message = result.stdout
+        return result
 
-        # Check if Glucose ran successfully
-        if code == RET_SAT:
-            print("Solvable, Glucose output:")
-            print(result_message)
-        elif code == RET_UNSAT:
-            print("Not solvable")
-            print(result_message)
     except FileNotFoundError:
         print("Glucose executable not found. Ensure 'glucose' is in your system's PATH.")
     except Exception as e:
         print(f"An error occurred: {e}")
+
+"""
+Prints Glucose solver result, and also writes it into file, if provided filename
+"""
+def run_glucose_and_output(filename_dimacs: str, print_result: bool = False, filename_res: None | str = None):
+    try:
+        result = run_glucose(filename_dimacs)
+    except Exception as e:
+        print(f"Error has occured:  {e}")
+        return -1
+    
+    result_message = result.stdout
+        
+    """
+    code = result.returncode
+
+    if code == RET_SAT:
+        print("Solvable, Glucose output:")
+        print(result_message)
+    elif code == RET_UNSAT:
+        print("Not solvable")
+        print(result_message)
+    """
+
+    if (print_result == True):
+        print(result_message)
+
+    if filename_res is not None:
+        with open(filename_res, 'w') as file:
+            file.write(result_message)
+        print(f"Output written to {filename_res}")
+
+    return 0
 
 
 if __name__ == "__main__":
@@ -151,5 +181,4 @@ if __name__ == "__main__":
     print_list("DIMACS clauses:", dimacs_clauses)
 
     output_dimacs_file(dimacs_clauses, filename_dimacs)
-
-    run_glucose(filename_dimacs)
+    run_glucose_and_output(filename_dimacs, False, filename_res)
