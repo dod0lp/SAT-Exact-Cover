@@ -159,12 +159,13 @@ def run_glocse_output_file(filename_dimacs: str, filename_res: None | str = None
 
     return 0
 
-def run_glucose_user(filename_dimacs: str) -> (Literal[0, 1, -1]):
+def run_glucose_user(filename_dimacs: str) -> (Literal[0, 1, -1]) | list[int]:
     """
     Prints results into console in user-friendly way. 
 
+        Return values:
+            List of which `rows`/`subsets` to choose, `non-negative` -> `choose`
         Return Codes:
-            `0` If operation is successful.
             `-1` If there is an error.
             `1` If operation is not satisfiable.
     """
@@ -201,9 +202,7 @@ def run_glucose_user(filename_dimacs: str) -> (Literal[0, 1, -1]):
         except ValueError:
             print("Invalid value in results.")
 
-    print(variables_int)
-
-    return 0
+    return variables_int
 
 
 def generate_filenames(filename_instance: str, data_prefix="../data/") -> dict[str, str]:
@@ -226,6 +225,10 @@ def generate_filenames(filename_instance: str, data_prefix="../data/") -> dict[s
     
     return filenames
 
+def filter_non_negative(values):
+    return [x for x in values if x >= 0]
+
+
 
 if __name__ == "__main__":
     filename_instance = "2"
@@ -247,4 +250,12 @@ if __name__ == "__main__":
 
 
     run_glocse_output_file(filename_dimacs, filename_res)
-    run_glucose_user(filename_dimacs)
+    res = run_glucose_user(filename_dimacs)
+
+    if (res == 1):
+        print("Not satisfiable")
+    if (res != -1):
+        if (len(res) == 0):
+            print("There is no valuation to satisfy.")
+        else:
+            print(f"The satisfiable choosings of subsets are: {filter_non_negative(res)}")

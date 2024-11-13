@@ -2,7 +2,7 @@
 Python parser of graph to find out **Exact Cover** problem using solver *Glucose*, and print result in human-readable form.
 
 ## Input
-You are given an *rows* x *cols* matrix (a matrix of `True`/`False` values).
+You are given a *rows* x *cols* matrix (a matrix of `True`/`False` values).
 - Matrix Representation
     - **rows** of the matrix correspond to potential *sets*.
         - number of *rows* is number of collection of subsets of set *X*
