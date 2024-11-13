@@ -21,16 +21,18 @@ def parse_file(filename):
         for i in range(rows):
             line = file.readline().strip()
             try:
-                values = list(map(int, line.split()))
+                values = [bool(int(x)) for x in line.split()]
+                
                 if len(values) != cols:
-                    print(f"Error: Line {i+2} does not have {cols} integers.")
+                    print(f"Error: Line {i+2} does not have {cols} values.")
                     return
+                
                 matrix.append(values)
             except ValueError:
                 print(f"Error: Line {i+2} contains non-integer values.")
                 return
         
-        print("Parsed Matrix:")
+        print("Parsed Matrix (as booleans):")
         for row in matrix:
             print(row)
 
