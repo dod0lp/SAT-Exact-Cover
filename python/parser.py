@@ -1,4 +1,5 @@
 import subprocess
+from typing import Literal
 from subprocess import CompletedProcess
 
 """
@@ -148,8 +149,13 @@ def run_glocse_output_file(filename_dimacs: str, filename_res: None | str = None
 
 """
 Prints results into console in user-friendly way. 
+
+    ret:
+        0 satisfiable
+        -1 error
+        1 not satisfiable
 """
-def run_glucose_user(filename_dimacs: str):
+def run_glucose_user(filename_dimacs: str) -> (Literal[0, 1, -1]):
     try:
         result = run_glucose(filename_dimacs)
     except Exception as e:
@@ -160,13 +166,24 @@ def run_glucose_user(filename_dimacs: str):
         print("Satisiable, possible solution is: ")
     elif (result.returncode == RET_UNSAT):
         print("Not satisfiable.")
+        return 1
     
     result_message = result.stdout
+
+    # look for resutls line, should simply be last non-empty one starting with 'v' and ending with '0'
     last_non_empty_line = [line for line in result_message.splitlines() if line.strip()][-1]
 
-    variables = last_non_empty_line[1:-1].split(" ")
+    result_line = last_non_empty_line.strip().split(" ")
+    if (result_line[0] != 'v' or result_line[-1] != '0'):
+        print("Error has occured and we couldn't find a model even tho there was supposed to be.")
+        return -1
+    
+    # contains literals as to how to set variables, but in form of strings not ints
+    variables_literals_strings = result_line[1:-1]
+
     variables_int = []
-    for var in variables:
+
+    for var in variables_literals_strings:
         try:
             variables_int.append(int(var))
         except ValueError:
@@ -174,11 +191,13 @@ def run_glucose_user(filename_dimacs: str):
 
     print(variables_int)
 
+    return 0
+
 
 if __name__ == "__main__":
     data_prefix = "../data/"
     filename_instance = "2"
-    filename_base = data_prefix + filename_instance
+    filename_base = data_prefix + filename_instance + '/' + filename_instance
     filename_in = filename_base + ".in"
     filename_res = filename_base + ".res"
     filename_dimacs = filename_base + ".dimacs"
