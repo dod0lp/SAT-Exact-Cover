@@ -2,7 +2,7 @@
 Python parser of graph to find out **Exact Cover** problem using solver *Glucose*, and print result in human-readable form.
 
 ## Input
-You are given an *m* x *n* matrix (a matrix of 1/0 values).
+You are given an *rows* x *cols* matrix (a matrix of `True`/`False` values).
 - Matrix Representation
     - **rows** of the matrix correspond to potential *sets*.
     - **columns** correspond to the *elements that need to be covered*.
@@ -14,10 +14,10 @@ You are given an *m* x *n* matrix (a matrix of 1/0 values).
     - The rows that are selected form an Exact Cover.
  
 ## Encoding
-- **Variables**: Each row *i* is represented by boolean variable *x_i*
+- **Variables**: Each row *row* is represented by boolean variable *x_row*
     - `True` - selected
     - `False` - not selected
      
-- **At least one row covers each column**: For ecah column *j* ew create clause where we list all the rows *i* that are `True` in column *j*.
+- **At least one row covers each column**: For each column *col* create clause where we list all the rows *row* that are `True` in column *col*.
 
-- **At most one row covers each column**: For eachany two rows *i_1* *i_2* that both cover the same column *j*, we ad a clause to ensure that no two rows can bes elected to cover the same column.
+- **At most one row covers each column**: For eachany two rows *row_i* *row_j* that both cover the same column *col*, we ad a clause to ensure that no two rows can be selected to cover the same column.
