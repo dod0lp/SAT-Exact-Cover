@@ -64,8 +64,44 @@ def exact_cover_to_sat(matrix) -> list[int]:
 
     return clauses
 
+"""
+Writes clause list into file line by line, no formatting of dimacs
+"""
+def write_clause_list_to_file(clauses: list[int], filename: str):
+    with open(filename, 'a') as file:
+        for sublist in clauses:
+            file.write(" ".join(map(str, sublist)) + "\n")
+
+"""
+Writes prefix of DIMACS
+"""
+def dimacs_header(clauses: list[int], filename: str):
+    # = number of variables (maximum absolute value in the clauses)
+    num_variables = max(max(abs(literal) for literal in clause) for clause in clauses)
+    
+    num_clauses = len(clauses)
+    
+    with open(filename, 'w') as file:
+        file.write(f"p cnf {num_variables} {num_clauses}\n")
+
+"""
+Output DIMACS format into REWRITTEN file.
+"""
+def output_dimacs_file(clauses: list[int], filename: str):
+    dimacs_header(clauses, filename)
+
+    write_clause_list_to_file(clauses, filename)
+
+
 def print_sep():
     print("##############\n")
+
+def print_list(message: str, array: list, sep = True):
+    print(message)
+    for line in array:
+        print(line)
+
+    print_sep()
 
 def clauses_into_dimacs(clauses: list[int]):
     return [clause + [0] for clause in clauses]
@@ -78,17 +114,8 @@ if __name__ == "__main__":
     clauses = exact_cover_to_sat(parsed_input)
     dimacs_clauses = clauses_into_dimacs(clauses)
 
-    print("Parsed input:")
-    for line in parsed_input:
-        print(line)
-    print_sep()
+    print_list("Parsed input:", parsed_input)
+    print_list("CNF clauses:", clauses)
+    print_list("DIMACS clauses:", clauses)
 
-    print("CNF clauses:")
-    for line in clauses:
-        print(line)
-    print_sep()
-
-    print("DIMACS clauses:")
-    for line in dimacs_clauses:
-        print(line)
-    print_sep()
+    output_dimacs_file(clauses, "out")
