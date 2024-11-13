@@ -136,14 +136,19 @@ def run_glucose(filename_dimacs: str) -> CompletedProcess[str]:
     except Exception as e:
         print(f"An error occurred: {e}")
 
-def run_glocse_output_file(filename_dimacs: str, filename_res: None | str = None) -> (Literal[0, -1]):
+def run_glocse_output_file(filename_dimacs: str, filename_res: None | str = None) -> (Literal[0, 1, -1]):
     """
     Prints Glucose solver result, and also writes it into file, if provided filename
 
         Return values:
             `0` run successfully
             `-1` error
+            `1` nothing written because no results file was provided
     """
+
+    if filename_res is None:
+        return 1
+
     try:
         result = run_glucose(filename_dimacs)
     except Exception as e:
@@ -152,19 +157,18 @@ def run_glocse_output_file(filename_dimacs: str, filename_res: None | str = None
     
     result_message = result.stdout
 
-    if filename_res is not None:
-        with open(filename_res, 'w') as file:
-            file.write(result_message)
-        print(f"Output written to {filename_res}")
+    with open(filename_res, 'w') as file:
+        file.write(result_message)
+    print(f"Output of Glucose written to {filename_res}")
 
     return 0
 
 def run_glucose_user(filename_dimacs: str) -> (Literal[0, 1, -1]) | list[int]:
     """
-    Prints results into console in user-friendly way. 
+    Prints results into console in user-friendly way.
 
         Return values:
-            List of which `rows`/`subsets` to choose, `non-negative` -> `choose`
+            `List` of which `rows`/`subsets` to choose, `non-negative` -> `choose`
         Return Codes:
             `-1` If there is an error.
             `1` If operation is not satisfiable.
@@ -174,10 +178,8 @@ def run_glucose_user(filename_dimacs: str) -> (Literal[0, 1, -1]) | list[int]:
     except Exception as e:
         print(f"Error has occured:  {e}")
         return -1
-    
-    if (result.returncode == RET_SAT):
-        print("Satisiable, possible solution is: ")
-    elif (result.returncode == RET_UNSAT):
+
+    if (result.returncode == RET_UNSAT):
         print("Not satisfiable.")
         return 1
     
@@ -208,7 +210,7 @@ def run_glucose_user(filename_dimacs: str) -> (Literal[0, 1, -1]) | list[int]:
 def generate_filenames(filename_instance: str, data_prefix="../data/") -> dict[str, str]:
     """
     Create filenames based on input instance_name, by default the data is in `../data/instance_name` folder
-        Return values: dict[str]:
+        Return values `dict[str]`:
             `"in"` - filename of input file
             `"res"` - filename of result returned by glucose
             `"dimacs"` - filename of dimacs encoding encoded by this script
@@ -225,33 +227,45 @@ def generate_filenames(filename_instance: str, data_prefix="../data/") -> dict[s
     
     return filenames
 
-def filter_non_negative(values):
-    return [x for x in values if x >= 0]
+def generate_filenames_tuple(filename_instance: str, data_prefix="../data/") -> dict[str, str]:
+    """
+    Create filenames based on input instance_name, by default the data is in `../data/instance_name` folder
+        Return values `tuple[str]`:
+            `0` - filename of input file
+            `1` - filename of result returned by glucose
+            `2` - filename of dimacs encoding encoded by this script
+    """
+    # base filename using the provided instance and prefix
+    filename_base = data_prefix + filename_instance + '/' + filename_instance
+    
+    # the filenames for each extension
+    filenames = (
+        filename_base + ".in",
+        filename_base + ".res",
+        filename_base + ".dimacs"
+    )
+    
+    return filenames
 
+def generate_dimacs_file(filename_in: str) -> Literal[0, -1]:
+    """
+    Generates `DIMACS` file out of base input file.
 
+        Return values:
+            
+    """
+    try:
+        parsed_input = parse_file(filename_in)
+        clauses = exact_cover_to_sat(parsed_input)
+        dimacs_clauses = clauses_into_dimacs(clauses)
 
-if __name__ == "__main__":
-    filename_instance = "2"
-    filenames = generate_filenames(filename_instance)
-    filename_in = filenames["in"]
-    filename_res = filenames["res"]
-    filename_dimacs = filenames["dimacs"]
+        output_dimacs_file(dimacs_clauses, filename_dimacs)
 
+        return 0
+    except:
+        return -1
 
-    parsed_input = parse_file(filename_in)
-    clauses = exact_cover_to_sat(parsed_input)
-    dimacs_clauses = clauses_into_dimacs(clauses)
-
-    print_list("Parsed input:", parsed_input)
-    print_list("CNF clauses:", clauses)
-    print_list("DIMACS clauses:", dimacs_clauses)
-
-    output_dimacs_file(dimacs_clauses, filename_dimacs)
-
-
-    run_glocse_output_file(filename_dimacs, filename_res)
-    res = run_glucose_user(filename_dimacs)
-
+def interpret_glucose_user(res: int | list[int]) -> None:
     if (res == 1):
         print("Not satisfiable")
     if (res != -1):
@@ -259,3 +273,32 @@ if __name__ == "__main__":
             print("There is no valuation to satisfy.")
         else:
             print(f"The satisfiable choosings of subsets are: {filter_non_negative(res)}")
+
+def filter_non_negative(values):
+    return [x for x in values if x >= 0]
+
+
+
+if __name__ == "__main__":
+    filename_instance = "2"
+    filename_in, filename_res, filename_dimacs = generate_filenames_tuple(filename_instance)
+
+    # filenames = generate_filenames(filename_instance)
+    # filename_in = filenames["in"]
+    # filename_res = filenames["res"]
+    # filename_dimacs = filenames["dimacs"]
+
+
+    # parsed_input = parse_file(filename_in)
+    # clauses = exact_cover_to_sat(parsed_input)
+    # dimacs_clauses = clauses_into_dimacs(clauses)
+    # print_list("Parsed input:", parsed_input)
+    # print_list("CNF clauses:", clauses)
+    # print_list("DIMACS clauses:", dimacs_clauses)
+
+    # output_dimacs_file(dimacs_clauses, filename_dimacs)
+
+    generate_dimacs_file(filename_in)
+    run_glocse_output_file(filename_dimacs, filename_res)
+    interpret_glucose_user(run_glucose_user(filename_dimacs))
+    
