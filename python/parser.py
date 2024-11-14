@@ -293,35 +293,6 @@ def interpret_glucose_user(res: int | list[int]) -> None:
         else:
             print(f"The satisfiable choosings of subsets are: {filter_non_negative(res)}")
 
-def smallest_multiple_of_x(inp, x = 9):
-    return ((inp + (x-1)) // x) * x
-
-def make_coord_mapper(sudoku_lenth: int = 3):
-    coord_map = {}
-    count = 1
-
-    for row in range(sudoku_lenth):
-        for col in range(sudoku_lenth):
-            coord_map[count * sudoku_lenth * sudoku_lenth] = (row, col)
-            count += 1
-
-    return coord_map
-
-
-def interpret_glucose_sudoku(res: int | list[int]) -> None:
-    if (res == 1):
-        print("Not satisfiable")
-    if (res != -1):
-        if (len(res) == 0):
-            print("There is no valuation to satisfy.")
-        else:
-            coord_mapper = make_coord_mapper(3)
-            ans = [int(x) for x in filter_non_negative(res)]
-            for x in ans:
-                print(f"{x}, {coord_mapper[smallest_multiple_of_x(x)]}: {smallest_multiple_of_x(x) -x}")
-            
-
-
 
 def filter_non_negative(values):
     return [x for x in values if x >= 0]
@@ -335,14 +306,3 @@ if __name__ == "__main__":
     generate_dimacs_file(filename_in, filename_dimacs)
     run_glocse_output_file(filename_dimacs, filename_res)
     interpret_glucose_user(run_glucose_user(filename_dimacs))
-
-    sudoku_array = array_generator.generate_boolean_arrays_with_separate_repeats(9)
-    for i, x in enumerate(sudoku_array, 1):
-        print(f"{i}: {x}")
-
-    debug_in, debug_res, debug_dimacs = generate_filenames_tuple("sudoku")
-    generate_dimacs_file_debug(sudoku_array, debug_dimacs)
-    run_glocse_output_file(debug_dimacs, debug_res)
-    interpret_glucose_sudoku(run_glucose_user(debug_dimacs))
-
-    print(make_coord_mapper())
