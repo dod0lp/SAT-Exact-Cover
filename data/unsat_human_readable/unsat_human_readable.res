@@ -20,10 +20,10 @@ c nb removed Clauses    : 0
 c nb learnts DL2        : 0
 c nb learnts size 2     : 0
 c nb learnts size 1     : 0
-c conflicts             : 0              (0 /sec)
-c decisions             : 0              ( nan % random) (0 /sec)
-c propagations          : 4              (4000 /sec)
+c conflicts             : 0              (nan /sec)
+c decisions             : 0              ( nan % random) (nan /sec)
+c propagations          : 4              (inf /sec)
 c nb reduced Clauses    : 0
-c CPU time              : 0.001 s
+c CPU time              : 0 s
 
 s UNSATISFIABLE

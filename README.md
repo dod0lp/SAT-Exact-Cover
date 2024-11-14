@@ -2,13 +2,19 @@
 Python parser of graph to find out **Exact Cover** problem using solver *Glucose*, and print result in human-readable form.
 
 ## Input
-You are given a *rows* x *cols* matrix (a matrix of `True`/`False` values).
-- Matrix Representation
-    - **rows** of the matrix correspond to potential *sets*.
-        - number of *rows* is number of collection of subsets of set *X*
-    - **columns** correspond to the *elements that need to be covered*.
-        - Number of elements in a set *X*
+- **In general**
+    - You are given a *rows* x *cols* matrix (a matrix of `True`/`False` values).
+    - **Matrix Representation**
+        - **rows** of the matrix correspond to potential *sets*.
+            - number of *rows* is number of collection of subsets of set *X*
+        - **columns** correspond to the *elements that need to be covered*.
+            - Number of elements in a set *X*
 
+- **User input**
+    - In folder *data* you need to provide a new folder with name of your tests, for example *to_solve*,
+    and input file anmed *to_solve.in*, which contains data in form of matrix in following format:
+        - *first row*: *number of rows* [whitespace] *number of columns*
+        - *following* **number of rows** *rows*: *number of columns* of 0 1 integers
 
 ## Solve
 - Select a subset of rows such that:

@@ -3,6 +3,8 @@ from typing import Literal
 from subprocess import CompletedProcess
 from array_generator import *
 import random
+import argparse
+import os
 
 """
 Rows Columns
@@ -118,7 +120,7 @@ def clauses_into_dimacs(clauses: list[int]) -> list[int]:
 RET_UNSAT = 20
 RET_SAT = 10
 
-def run_glucose(filename_dimacs: str) -> CompletedProcess[str]:
+def run_glucose(filename_dimacs: str, glucose_alias: str = 'glucose') -> CompletedProcess[str]:
     """
     Runs Glucose solver process, and gets results
 
@@ -127,13 +129,13 @@ def run_glucose(filename_dimacs: str) -> CompletedProcess[str]:
             - `Exception`
     """
     try:
-        result = subprocess.run(['glucose', '-model', '-verb=' + "1" , filename_dimacs],\
+        result = subprocess.run([glucose_alias, '-model', '-verb=' + "1" , filename_dimacs],\
                                 text=True, capture_output=True)
         
         return result
 
     except FileNotFoundError:
-        print("Glucose executable not found. Ensure 'glucose' is in your system's PATH.")
+        print(f"Glucose executable not found. Ensure {glucose_alias} is in your system's PATH.")
     except Exception as e:
         print(f"An error occurred: {e}")
 
@@ -314,27 +316,91 @@ def generator_interpretator(filename_instance: str):
     glucose_res = run_glucose_user(filename_dimacs)
     interpret_glucose_user(glucose_res)
 
+def generator_interpretator_options(filename_instance: str, save_cnf: bool = True, glucose_output: bool = True):
+    filename_in, filename_res, filename_dimacs = generate_filenames_tuple(filename_instance)
+
+    generate_dimacs_file(filename_in, filename_dimacs)
+
+    if (glucose_output):
+        run_glocse_output_file(filename_dimacs, filename_res)
+
+    glucose_res = run_glucose_user(filename_dimacs)
+    interpret_glucose_user(glucose_res)
+
+    if (not save_cnf):
+        os.remove(filename_dimacs)
+
+
+
 if __name__ == "__main__":
-    dry_run = True
-    debug = True
+    user_input = True
+
+    dry_run = False
+    
+    # BEFORE CHANGING FOLLOWING VARIABLE, READ THIS
+    # I had 10GB RAM limit for python and it wasn't enough for size variable more than 1000
+    # size == 1250 ran for around 30minutes (most of it was generating dimacs clauses)
+    # Resulting DIMACS file has 1GB of data, and is almost 10 million lines
+    sat_long_running = False
     
     if (dry_run == True):
         generator_interpretator("sat_human_readable")
         generator_interpretator("unsat_human_readable")
 
-    if (debug == True):
-        debug_in, debug_res, debug_dimacs = generate_filenames_tuple("unsat_long")
+    if (sat_long_running == True):
+        debug_in, debug_res, debug_dimacs = generate_filenames_tuple("sat_long")
         size = 1250
         
         debug_list = generator_queen_array_fuzzy_sat(size)
-
-        # I had 10GB RAM limit for python and it wasn't enough for size variable more than 1000
-        # size == 1250 ran for around 30minutes (most of it was generating dimacs clauses)
-        # Next line - RUN AT YOUR OWN RISK
-        # Resulting DIMACS file has more than 1GB of data, and is almost 10Million lines
-
-        # generate_dimacs_file_debug(debug_list, debug_dimacs, True)
+        generate_dimacs_file_debug(debug_list, debug_dimacs, True)
         run_glocse_output_file(debug_dimacs, debug_res)
 
-        # debug_glucose = run_glucose_user(debug_dimacs)
-        # interpret_glucose_user(debug_glucose)
+        debug_glucose = run_glucose_user(debug_dimacs)
+        interpret_glucose_user(debug_glucose)
+
+    if (user_input == True):
+        parser = argparse.ArgumentParser()
+
+        parser.add_argument(
+            "--name",
+            type=str,
+            help=(
+                "Name of the file you want to solve, without .suffix, contained in ../data/name/name.in"
+            )
+        )
+        parser.add_argument(
+            "--alias",
+            type=str,
+            default="glucose",
+            help=(
+                "The SAT solver to be used using your system PATH variables."
+            ),
+        )
+        parser.add_argument(
+            "--verbose",
+            type=int,
+            default=1,
+            choices=range(0,2),
+            help=(
+                "Choose whether or not store file as .res file which was output of glucose."
+            ),
+        )
+        parser.add_argument(
+            "--cnf_save",
+            type=int,
+            default=1,
+            choices=range(0,2),
+            help=(
+                "Choose whether or not store encoded CNF DIMACS formula of the problem."
+            ),
+        )
+
+        args = parser.parse_args()
+
+        cnf_save, verbose = True, True
+        if (args.cnf_save == 0):
+            cnf_save = False
+        if (args.verbose == 0):
+            verbose = False
+
+        generator_interpretator_options(args.name, cnf_save, verbose)
