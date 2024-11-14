@@ -283,22 +283,6 @@ if __name__ == "__main__":
     filename_instance = "2"
     filename_in, filename_res, filename_dimacs = generate_filenames_tuple(filename_instance)
 
-    # filenames = generate_filenames(filename_instance)
-    # filename_in = filenames["in"]
-    # filename_res = filenames["res"]
-    # filename_dimacs = filenames["dimacs"]
-
-
-    # parsed_input = parse_file(filename_in)
-    # clauses = exact_cover_to_sat(parsed_input)
-    # dimacs_clauses = clauses_into_dimacs(clauses)
-    # print_list("Parsed input:", parsed_input)
-    # print_list("CNF clauses:", clauses)
-    # print_list("DIMACS clauses:", dimacs_clauses)
-
-    # output_dimacs_file(dimacs_clauses, filename_dimacs)
-
     generate_dimacs_file(filename_in)
     run_glocse_output_file(filename_dimacs, filename_res)
     interpret_glucose_user(run_glucose_user(filename_dimacs))
-    
