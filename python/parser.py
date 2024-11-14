@@ -1,7 +1,8 @@
 import subprocess
 from typing import Literal
 from subprocess import CompletedProcess
-import array_generator
+from array_generator import *
+import random
 
 """
 Rows Columns
@@ -48,7 +49,7 @@ def parse_file(filename: str) -> list[bool]:
 
 def exact_cover_to_sat(matrix) -> list[int]:
     """
-    Using mappings defined in `README`, map parsed input into `CNF` clauses.
+    Map parsed input into `CNF` clauses. (Using mappings defined in `README`)
     """
     rows, columns = len(matrix), len(matrix[0])
     clauses = []
@@ -72,7 +73,6 @@ def exact_cover_to_sat(matrix) -> list[int]:
     return clauses
 
 def write_clause_list_to_file(clauses: list[int], filename: str):
-
     """
     Writes clause list into file line by line, no formatting of dimacs
     """
@@ -142,9 +142,9 @@ def run_glocse_output_file(filename_dimacs: str, filename_res: None | str = None
     Prints Glucose solver result, and also writes it into file, if provided filename
 
         Return values:
-            `0` run successfully
-            `-1` error
-            `1` nothing written because no results file was provided
+            - `0` run successfully
+            - `-1` error
+            - `1` nothing written because no results file was provided
     """
 
     if filename_res is None:
@@ -164,7 +164,7 @@ def run_glocse_output_file(filename_dimacs: str, filename_res: None | str = None
 
     return 0
 
-def run_glucose_user(filename_dimacs: str) -> (Literal[0, 1, -1]) | list[int]:
+def run_glucose_user(filename_dimacs: str) -> (Literal[1, -1]) | list[int]:
     """
     Prints results into console in user-friendly way.
 
@@ -181,7 +181,6 @@ def run_glucose_user(filename_dimacs: str) -> (Literal[0, 1, -1]) | list[int]:
         return -1
 
     if (result.returncode == RET_UNSAT):
-        print("Not satisfiable.")
         return 1
     
     result_message = result.stdout
@@ -191,7 +190,7 @@ def run_glucose_user(filename_dimacs: str) -> (Literal[0, 1, -1]) | list[int]:
 
     result_line = last_non_empty_line.strip().split(" ")
     if (result_line[0] != 'v' or result_line[-1] != '0'):
-        print("Error has occured and we couldn't find a model even tho there was supposed to be.")
+        print("Error has occured and we couldn't find a model even tho there was supposed to be, or input file was corrupted.")
         return -1
     
     # contains literals as to how to set variables, but in form of strings not ints
@@ -266,18 +265,27 @@ def generate_dimacs_file(filename_in: str, filename_dimacs: str) -> Literal[0, -
     except:
         return -1
     
-def generate_dimacs_file_debug(parsed_input: list[bool], filename_dimacs: str) -> Literal[0, -1]:
+def generate_dimacs_file_debug(parsed_input: list[bool], filename_dimacs: str, messages: bool = False) -> Literal[0, -1]:
     """
-    Generates `DIMACS` file out of base input file.
+    Generates `DIMACS` file out of already parsed matrix
 
         Return values:
+            - `0` Success
+            - `-1` Error
             
     """
     try:
         clauses = exact_cover_to_sat(parsed_input)
+        if (messages):
+            print("Clauses generated")
+
         dimacs_clauses = clauses_into_dimacs(clauses)
+        if (messages):
+            print("Dimacs clauses generated")
 
         output_dimacs_file(dimacs_clauses, filename_dimacs)
+        if (messages):
+            print("Dimacs file generated")
 
         return 0
     except:
@@ -287,7 +295,7 @@ def generate_dimacs_file_debug(parsed_input: list[bool], filename_dimacs: str) -
 def interpret_glucose_user(res: int | list[int]) -> None:
     if (res == 1):
         print("Not satisfiable")
-    if (res != -1):
+    elif (res != -1):
         if (len(res) == 0):
             print("There is no valuation to satisfy.")
         else:
@@ -297,12 +305,36 @@ def interpret_glucose_user(res: int | list[int]) -> None:
 def filter_non_negative(values):
     return [x for x in values if x >= 0]
 
-
-
-if __name__ == "__main__":
-    filename_instance = "2"
+def generator_interpretator(filename_instance: str):
     filename_in, filename_res, filename_dimacs = generate_filenames_tuple(filename_instance)
 
     generate_dimacs_file(filename_in, filename_dimacs)
     run_glocse_output_file(filename_dimacs, filename_res)
-    interpret_glucose_user(run_glucose_user(filename_dimacs))
+
+    glucose_res = run_glucose_user(filename_dimacs)
+    interpret_glucose_user(glucose_res)
+
+if __name__ == "__main__":
+    dry_run = True
+    debug = True
+    
+    if (dry_run == True):
+        generator_interpretator("sat_human_readable")
+        generator_interpretator("unsat_human_readable")
+
+    if (debug == True):
+        debug_in, debug_res, debug_dimacs = generate_filenames_tuple("unsat_long")
+        size = 1250
+        
+        debug_list = generator_queen_array_fuzzy_sat(size)
+
+        # I had 10GB RAM limit for python and it wasn't enough for size variable more than 1000
+        # size == 1250 ran for around 30minutes (most of it was generating dimacs clauses)
+        # Next line - RUN AT YOUR OWN RISK
+        # Resulting DIMACS file has more than 1GB of data, and is almost 10Million lines
+
+        # generate_dimacs_file_debug(debug_list, debug_dimacs, True)
+        run_glocse_output_file(debug_dimacs, debug_res)
+
+        # debug_glucose = run_glucose_user(debug_dimacs)
+        # interpret_glucose_user(debug_glucose)
