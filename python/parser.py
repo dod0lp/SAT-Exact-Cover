@@ -341,13 +341,13 @@ if __name__ == "__main__":
     # I had 10GB RAM limit for python and it wasn't enough for size variable more than 1000
     # size == 1250 ran for around 30minutes (most of it was generating dimacs clauses)
     # Resulting DIMACS file has 1GB of data, and is almost 10 million lines
-    sat_long_running = False
+    sat_VERY_long_running = False
     
     if (dry_run == True):
         generator_interpretator("sat_human_readable")
         generator_interpretator("unsat_human_readable")
 
-    if (sat_long_running == True):
+    if (sat_VERY_long_running == True):
         debug_in, debug_res, debug_dimacs = generate_filenames_tuple("sat_long")
         size = 1250
         
