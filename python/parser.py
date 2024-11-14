@@ -1,6 +1,7 @@
 import subprocess
 from typing import Literal
 from subprocess import CompletedProcess
+import array_generator
 
 """
 Rows Columns
@@ -79,7 +80,7 @@ def write_clause_list_to_file(clauses: list[int], filename: str):
         for sublist in clauses:
             file.write(" ".join(map(str, sublist)) + "\n")
 
-def dimacs_header(clauses: list[int], filename: str):
+def write_dimacs_header(clauses: list[int], filename: str):
     """
     Writes prefix of DIMACS
     """
@@ -95,7 +96,7 @@ def output_dimacs_file(clauses: list[int], filename: str):
     """
     Output DIMACS format into REWRITTEN file.
     """
-    dimacs_header(clauses, filename)
+    write_dimacs_header(clauses, filename)
 
     write_clause_list_to_file(clauses, filename)
 
@@ -110,7 +111,7 @@ def print_list(message: str, array: list, sep = True):
 
     print_sep()
 
-def clauses_into_dimacs(clauses: list[int]):
+def clauses_into_dimacs(clauses: list[int]) -> list[int]:
     return [clause + [0] for clause in clauses]
 
 
@@ -247,7 +248,7 @@ def generate_filenames_tuple(filename_instance: str, data_prefix="../data/") -> 
     
     return filenames
 
-def generate_dimacs_file(filename_in: str) -> Literal[0, -1]:
+def generate_dimacs_file(filename_in: str, filename_dimacs: str) -> Literal[0, -1]:
     """
     Generates `DIMACS` file out of base input file.
 
@@ -264,6 +265,24 @@ def generate_dimacs_file(filename_in: str) -> Literal[0, -1]:
         return 0
     except:
         return -1
+    
+def generate_dimacs_file_debug(parsed_input: list[bool], filename_dimacs: str) -> Literal[0, -1]:
+    """
+    Generates `DIMACS` file out of base input file.
+
+        Return values:
+            
+    """
+    try:
+        clauses = exact_cover_to_sat(parsed_input)
+        dimacs_clauses = clauses_into_dimacs(clauses)
+
+        output_dimacs_file(dimacs_clauses, filename_dimacs)
+
+        return 0
+    except:
+        return -1
+
 
 def interpret_glucose_user(res: int | list[int]) -> None:
     if (res == 1):
@@ -274,6 +293,36 @@ def interpret_glucose_user(res: int | list[int]) -> None:
         else:
             print(f"The satisfiable choosings of subsets are: {filter_non_negative(res)}")
 
+def smallest_multiple_of_x(inp, x = 9):
+    return ((inp + (x-1)) // x) * x
+
+def make_coord_mapper(sudoku_lenth: int = 3):
+    coord_map = {}
+    count = 1
+
+    for row in range(sudoku_lenth):
+        for col in range(sudoku_lenth):
+            coord_map[count * sudoku_lenth * sudoku_lenth] = (row, col)
+            count += 1
+
+    return coord_map
+
+
+def interpret_glucose_sudoku(res: int | list[int]) -> None:
+    if (res == 1):
+        print("Not satisfiable")
+    if (res != -1):
+        if (len(res) == 0):
+            print("There is no valuation to satisfy.")
+        else:
+            coord_mapper = make_coord_mapper(3)
+            ans = [int(x) for x in filter_non_negative(res)]
+            for x in ans:
+                print(f"{x}, {coord_mapper[smallest_multiple_of_x(x)]}: {smallest_multiple_of_x(x) -x}")
+            
+
+
+
 def filter_non_negative(values):
     return [x for x in values if x >= 0]
 
@@ -283,6 +332,17 @@ if __name__ == "__main__":
     filename_instance = "2"
     filename_in, filename_res, filename_dimacs = generate_filenames_tuple(filename_instance)
 
-    generate_dimacs_file(filename_in)
+    generate_dimacs_file(filename_in, filename_dimacs)
     run_glocse_output_file(filename_dimacs, filename_res)
     interpret_glucose_user(run_glucose_user(filename_dimacs))
+
+    sudoku_array = array_generator.generate_boolean_arrays_with_separate_repeats(9)
+    for i, x in enumerate(sudoku_array, 1):
+        print(f"{i}: {x}")
+
+    debug_in, debug_res, debug_dimacs = generate_filenames_tuple("sudoku")
+    generate_dimacs_file_debug(sudoku_array, debug_dimacs)
+    run_glocse_output_file(debug_dimacs, debug_res)
+    interpret_glucose_sudoku(run_glucose_user(debug_dimacs))
+
+    print(make_coord_mapper())
