@@ -327,9 +327,11 @@ def generator_interpretator(filename_instance: str, save_cnf: bool = True, gluco
 
 
 if __name__ == "__main__":
+    # base file for running as user using CMD ARGUMENTS
+    # tested on windows
     user_input = True
 
-    dry_run = True
+    dry_run = False
     
     # BEFORE CHANGING FOLLOWING VARIABLE, READ THIS
     # I use a script to create satisfiable big formulas, but the prep time is really really long,
@@ -394,5 +396,8 @@ if __name__ == "__main__":
         if (args.verbose == 0):
             verbose = False
 
-        if (args.name != None):
-            generator_interpretator(args.name, cnf_save, verbose)
+        if (args.name == None):
+            print("No input provided.")
+            exit()
+
+        generator_interpretator(args.name, cnf_save, verbose)
